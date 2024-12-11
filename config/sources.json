@@ -1,0 +1,92 @@
+[
+    {
+        "name": "Shodan",
+        "type": "API",
+        "api_key": "your_shodan_api_key",
+        "base_url": "https://api.shodan.io",
+        "queries": [
+            "port:22 country:IN",
+            "port:80 country:US",
+            "vuln:CVE-2023-XXXX"
+        ],
+        "description": "Shodan search for various exposed services and vulnerabilities.",
+        "limit": 50,
+        "enabled": true,
+        "rate_limit": {
+            "requests_per_minute": 60
+        },
+        "headers": {
+            "User-Agent": "CyberIntelAgent/1.0"
+        },
+        "retry_policy": {
+            "retries": 3,
+            "backoff": 2
+        }
+    },
+    {
+        "name": "CERT-In",
+        "type": "RSS",
+        "feed_url": "https://www.cert-in.org.in/rss/cyber_alerts.xml",
+        "description": "CERT-In cyber alerts RSS feed providing updates on cybersecurity incidents in India",
+        "enabled": true,
+        "refresh_interval": "hourly",
+        "parser": {
+            "type": "xml",
+            "fields": {
+                "title": "item > title",
+                "link": "item > link",
+                "pubDate": "item > pubDate",
+                "description": "item > description"
+            }
+        }
+    },
+    {
+        "name": "VirusTotal",
+        "type": "API",
+        "api_key": "your_virustotal_api_key",
+        "base_url": "https://www.virustotal.com/api/v3",
+        "queries": [
+            "file:malware-related-threats",
+            "url:phishing-detection",
+            "domain:recent-attacks"
+        ],
+        "description": "VirusTotal API for malware analysis, phishing detection, and threat intelligence.",
+        "limit": 25,
+        "enabled": true,
+        "rate_limit": {
+            "requests_per_minute": 25
+        },
+        "headers": {
+            "x-apikey": "your_virustotal_api_key",
+            "User-Agent": "CyberIntelAgent/1.0"
+        },
+        "retry_policy": {
+            "retries": 3,
+            "backoff": 2
+        }
+    },
+    {
+        "name": "Censys",
+        "type": "API",
+        "api_key": "your_censys_api_key",
+        "base_url": "https://search.censys.io/api",
+        "queries": [
+            "services.service_name:HTTP AND location.country_code:IN",
+            "tags:exploitable-vulnerabilities"
+        ],
+        "description": "Censys API for network scans and vulnerability analysis.",
+        "limit": 50,
+        "enabled": true,
+        "rate_limit": {
+            "requests_per_minute": 50
+        },
+        "headers": {
+            "Authorization": "Bearer your_censys_api_key",
+            "User-Agent": "CyberIntelAgent/1.0"
+        },
+        "retry_policy": {
+            "retries": 3,
+            "backoff": 2
+        }
+    }
+]

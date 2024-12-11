@@ -1,0 +1,26 @@
+cyber_incident_feed/
+├── src/
+│   ├── data_fetchers/
+│   │   ├── certin_fetcher.py          # Fetch data from CERT-In feeds
+│   │   ├── shodan_fetcher.py          # Fetch data from Shodan
+│   │   ├── Censys_fetcher.py          # Fetch data from Censys
+│   │   ├── VirusTotal_fetcher.py      # Fetch data from VirusTotal
+│   ├── elasticsearch_client.py        # Elasticsearch client setup
+│   ├── indexer.py                     # Indexing data into Elasticsearch
+│   ├── scheduler.py                   # Schedule periodic data fetching
+│   ├── analyzer.py                    # Data analysis (e.g., trends, patterns)
+├── config/
+│   ├── config.json                    # Global application settings
+│   ├── sources.json                   # Data source-specific configurations
+│   ├── .env                           # Environment variables (e.g., API keys)
+├── dashboards/
+│   ├── kibana_setup.md                # Instructions for setting up Kibana dashboards
+├── scripts/
+│   ├── setup_elasticsearch.py         # Script to set up Elasticsearch indices
+├── tests/
+│   ├── test_fetchers.py               # Unit tests for fetchers
+│   ├── test_indexer.py                # Unit tests for Elasticsearch integration
+├── requirements.txt                   # Python dependencies
+├── README.md                          # Project documentation
+├── main.py                            # Entry point for the application
+└── .gitignore                         # Ignore unnecessary files
