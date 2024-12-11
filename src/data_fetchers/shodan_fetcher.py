@@ -2,24 +2,43 @@ import shodan
 import json
 from datetime import datetime
 
-# Replace with your Shodan API Key
-SHODAN_API_KEY = "your_shodan_api_key"
-
-# File where incidents are stored
+# Replace with the path to your sources.json file
+SOURCE_FILE = "sources.json"
 FEED_FILE = "cyber_incident_feed.json"
 
-def fetch_shodan_data(query, limit=100):
+def load_sources(filename):
+    """
+    Load sources from a JSON file.
+
+    Args:
+        filename (str): Path to the JSON file.
+
+    Returns:
+        list: List of source configurations.
+    """
+    try:
+        with open(filename, "r") as file:
+            return json.load(file)
+    except FileNotFoundError:
+        print(f"Error: Source file {filename} not found.")
+        return []
+    except json.JSONDecodeError:
+        print(f"Error: Invalid JSON in {filename}.")
+        return []
+
+def fetch_shodan_data(api_key, query, limit=100):
     """
     Fetch data from Shodan API for a specific query.
 
     Args:
+        api_key (str): Shodan API key.
         query (str): The search query for Shodan.
         limit (int): Maximum number of results to fetch.
 
     Returns:
         list: A list of incident dictionaries.
     """
-    api = shodan.Shodan(SHODAN_API_KEY)
+    api = shodan.Shodan(api_key)
     incidents = []
     try:
         results = api.search(query, limit=limit)
@@ -27,7 +46,7 @@ def fetch_shodan_data(query, limit=100):
             incident = {
                 "source": "Shodan",
                 "title": f"Service Detected on {result['ip_str']}",
-                "link": f"https://www.shodan.io/host/{result['ip_str']}",  # Link to Shodan details
+                "link": f"https://www.shodan.io/host/{result['ip_str']}",
                 "published": datetime.utcnow().isoformat(),
                 "summary": f"Detected service on IP {result['ip_str']} using port {result.get('port', 'Unknown')}.",
                 "ip": result['ip_str'],
@@ -36,24 +55,8 @@ def fetch_shodan_data(query, limit=100):
             }
             incidents.append(incident)
     except shodan.APIError as e:
-        print(f"Error fetching data for query '{query}': {e}")
+        print(f"Shodan API Error: {e}")
     return incidents
-
-def load_existing_feed(filename):
-    """
-    Load existing cyber incident feed from JSON file.
-
-    Args:
-        filename (str): JSON file containing the feed.
-
-    Returns:
-        list: List of incidents.
-    """
-    try:
-        with open(filename, "r") as file:
-            return json.load(file)
-    except FileNotFoundError:
-        return []
 
 def save_feed_to_file(incidents, filename):
     """
@@ -63,39 +66,30 @@ def save_feed_to_file(incidents, filename):
         incidents (list): List of incidents to save.
         filename (str): Output JSON file name.
     """
-    with open(filename, "w") as file:
-        json.dump(incidents, file, indent=4)
-    print(f"Data saved to {filename}")
+    try:
+        with open(filename, "w") as file:
+            json.dump(incidents, file, indent=4)
+        print(f"Data saved to {filename}")
+    except Exception as e:
+        print(f"Error saving data: {e}")
 
 if __name__ == "__main__":
-    # List of Shodan queries
-    queries = [
-        "port:22 country:IN",  # SSH services in India
-        "port:80 country:IN",  # HTTP Servers in India
-        "port:443 country:US",  # HTTPS Servers in the United States
-        "port:3306 product:MySQL",  # MySQL Databases globally
-        "port:27017 country:CN",  # MongoDB Databases in China
-        "port:9200 product:ElasticSearch country:DE",  # ElasticSearch instances in Germany
-        "port:3389 country:IN has_screenshot:true",  # RDP Servers in India with screenshots
-        "default-password country:US",  # Devices with default passwords in the United States
-        "product:Docker",  # Exposed Docker APIs globally
-        "ssl:'example.com'",  # Devices with SSL certificates for example.com
-        "product:Apache version:2.2 country:IN"  # Outdated Apache servers in India
-    ]
+    # Load sources from the sources.json file
+    sources = load_sources(SOURCE_FILE)
 
-    # Initialize an empty list to store incidents
+    # Initialize a list to hold all fetched incidents
     all_incidents = []
 
-    for query in queries:
-        print(f"Fetching data for query: {query}")
-        incidents = fetch_shodan_data(query, limit=50)
-        all_incidents.extend(incidents)
+    # Iterate through sources to fetch data
+    for source in sources:
+        if source.get("name") == "Shodan" and source.get("enabled", False):
+            print(f"Fetching from Shodan with query: {source['query']}")
+            shodan_incidents = fetch_shodan_data(
+                api_key=source["api_key"],
+                query=source["query"],
+                limit=source.get("limit", 100)
+            )
+            all_incidents.extend(shodan_incidents)
 
-    # Load existing feed
-    existing_feed = load_existing_feed(FEED_FILE)
-
-    # Merge new incidents with existing feed
-    updated_feed = existing_feed + all_incidents
-
-    # Save updated feed to file
-    save_feed_to_file(updated_feed, FEED_FILE)
+    # Save the combined incidents to the feed file
+    save_feed_to_file(all_incidents, FEED_FILE)
